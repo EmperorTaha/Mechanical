@@ -1,0 +1,270 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Harmonic excitation of a SDOF</title><meta name="generator" content="MATLAB 9.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2018-04-10"><meta name="DC.source" content="Example.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>Harmonic excitation of a SDOF</h1><!--introduction--><p>The following example compares different numerical methods to simulate the response of a SDOF subjected to forced harmonic forces in the time domain. The exact solution is in addition used as reference for the comparison.</p><p>The numerical methods used here are :</p><div><ol><li>Central difference method</li><li>ode45 matlab built-in function</li><li>Newmark method</li><li>4th order Runge-Kutta method</li></ol></div><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Initialisation</a></li><li><a href="#2">Exact solution</a></li><li><a href="#3">Central differences</a></li><li><a href="#4">ODE 45</a></li><li><a href="#5">Newmark method</a></li><li><a href="#6">4th order Runge-Kutta</a></li></ul></div><h2 id="1">Initialisation</h2><pre class="codeinput">clearvars;close <span class="string">all</span>;clc;
+<span class="comment">% modal parameters</span>
+w0 = 1; <span class="comment">% eigen-frequency (rad/s)</span>
+eta = 0.02; <span class="comment">% damping ratio</span>
+wd = w0.*sqrt(1-eta.^2); <span class="comment">% damped eigen frequency (rad/s)</span>
+M = 1; <span class="comment">% mass</span>
+K = w0^2.*M; <span class="comment">% stifness</span>
+C = 2*eta.*M.*w0; <span class="comment">% damping</span>
+</pre><h2 id="2">Exact solution</h2><pre class="codeinput">t = linspace(0,300,2000); <span class="comment">% time</span>
+dt = median(diff(t)); <span class="comment">% time step</span>
+F0 = 10; <span class="comment">% amplitude of force</span>
+w = w0; <span class="comment">% pulsation of the harmonic force</span>
+F = F0.*cos(w.*t); <span class="comment">% expression of the harmonic force</span>
+
+<span class="comment">% initial conditions</span>
+v0 = 0; <span class="comment">% no initial speed</span>
+
+<span class="keyword">if</span> F0~=0 <span class="comment">% case of forced harmonic vibrations</span>
+    y0 = F0/K; <span class="comment">%initial displacement</span>
+    <span class="comment">% Cf. book of Daniel J. Inmnan: Engineering Vibrations, for the next few lines</span>
+    X = F0./sqrt((w0.^2-w.^2).^2+(2*eta.*w0*w).^2);
+    theta =atan((2*eta*w0*w)./(w0.^2-w.^2));
+    PHI = atan(wd.*(y0-X.*cos(theta))./(v0+(y0-X.*cos(theta)).*eta.*w0-w*X*sin(theta)));
+    A = (y0-X.*cos(theta))./sin(PHI);
+<span class="keyword">else</span> <span class="comment">% case of free vibrations</span>
+    y0 = 1;
+    PHI = atan(wd.*y0./(v0+y0.*eta.*w0));
+    A = 1/wd.*sqrt((v0+y0.*eta.*w0).^2+y0^2*wd^2);
+    X =0;
+    theta = 0;
+<span class="keyword">end</span>
+
+<span class="comment">% exact solution</span>
+y1 = A.*exp(-eta.*w0*t).*sin(wd.*t+PHI)+X.*cos(w*t-theta);
+</pre><h2 id="3">Central differences</h2><p>I am using the book of S. Rao (mechanical vibrations) for this function.</p><pre class="codeinput">[y2] = CentDiff(F,M,K,C,dt,y0,v0);
+
+
+figure
+plot(t,y1./max(y1(:)),<span class="string">'k'</span>,t,y2./max(y1),<span class="string">'r--'</span>)
+legend(<span class="string">'Exact solution'</span>,<span class="string">'Central differences'</span>,<span class="string">'location'</span>,<span class="string">'NorthWest'</span>)
+ylim([-1,1])
+xlabel(<span class="string">'time (s)'</span>)
+ylabel(<span class="string">'normalized displacement'</span>);
+set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>)
+</pre><img vspace="5" hspace="5" src="Example_01.png" alt=""> <h2 id="4">ODE 45</h2><p>Matlab built-in function is used here (It is based on state space representation, like the Runge-Kutta method).</p><pre class="codeinput">dXdT = @(t,x,A,F) A*x + F;
+[T,y3] = ode45(@(t,x) dXdT(t,x,[0,1;-M\K,-M\C],[0;M\(F0.*cos(w0.*t))]),[t(1),t(end)],[y0;v0]);
+
+figure
+plot(t,y1./max(y1(:)),<span class="string">'k'</span>,T,y3(:,1)./max(y1),<span class="string">'c--'</span>)
+legend(<span class="string">'Exact solution'</span>,<span class="string">'ode 45'</span>,<span class="string">'location'</span>,<span class="string">'NorthWest'</span>)
+ylim([-1,1])
+xlabel(<span class="string">'time (s)'</span>)
+ylabel(<span class="string">'normalized displacement'</span>);
+set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>)
+</pre><img vspace="5" hspace="5" src="Example_02.png" alt=""> <h2 id="5">Newmark method</h2><p>alpha = 1/4 by default beta = 1/2 by default</p><pre class="codeinput">[y4,~,~] = Newmark(F,M,K,C,dt,y0,v0);
+
+figure
+plot(t,y1./max(y1(:)),<span class="string">'k'</span>,t,y4./max(y1),<span class="string">'b--'</span>)
+legend(<span class="string">'Exact solution'</span>,<span class="string">'Newmark'</span>,<span class="string">'location'</span>,<span class="string">'NorthWest'</span>)
+ylim([-1,1])
+xlabel(<span class="string">'time (s)'</span>)
+ylabel(<span class="string">'normalized displacement'</span>);
+set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>)
+</pre><img vspace="5" hspace="5" src="Example_03.png" alt=""> <h2 id="6">4th order Runge-Kutta</h2><pre class="codeinput">Fun = @(t,Y,A,F) A*Y+ F; <span class="comment">% -&gt; cf state space model for 2nd  Newtown law</span>
+<span class="comment">% function for RG 4:  [Y' = AY + F]</span>
+
+y5 = zeros(size(t));
+clear <span class="string">inputFun</span>
+Y = [y0,v0]';
+<span class="keyword">for</span> ii=1:numel(t),
+    inputFun.A = [0, 1;-M\K,-M\C];
+    inputFun.F =[0;M\F(ii)];
+    inputFun.Y= Y;
+    [Y] = RK4(Fun,t,dt,inputFun);
+    y5(ii) = Y(1);
+<span class="keyword">end</span>
+
+figure
+plot(t,y1./max(y1(:)),<span class="string">'k'</span>,t,y5./max(y1),<span class="string">'g--'</span>)
+legend(<span class="string">'Exact solution'</span>,<span class="string">'RK4'</span>,<span class="string">'location'</span>,<span class="string">'NorthWest'</span>)
+ylim([-1,1])
+xlabel(<span class="string">'time (s)'</span>)
+ylabel(<span class="string">'normalized displacement'</span>);
+set(gcf,<span class="string">'color'</span>,<span class="string">'w'</span>)
+</pre><img vspace="5" hspace="5" src="Example_04.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Harmonic excitation of a SDOF
+% The following example compares different numerical methods to simulate
+% the response of a SDOF subjected to forced harmonic forces in the time domain. 
+% The exact solution is in addition used as reference for the comparison.
+% 
+% The numerical methods used here are :
+% 
+% # Central difference method
+% # ode45 matlab built-in function
+% # Newmark method
+% # 4th order Runge-Kutta method
+
+%% Initialisation
+clearvars;close all;clc;
+% modal parameters
+w0 = 1; % eigen-frequency (rad/s)
+eta = 0.02; % damping ratio
+wd = w0.*sqrt(1-eta.^2); % damped eigen frequency (rad/s)
+M = 1; % mass
+K = w0^2.*M; % stifness
+C = 2*eta.*M.*w0; % damping
+
+%% Exact solution
+
+t = linspace(0,300,2000); % time
+dt = median(diff(t)); % time step
+F0 = 10; % amplitude of force
+w = w0; % pulsation of the harmonic force
+F = F0.*cos(w.*t); % expression of the harmonic force
+
+% initial conditions
+v0 = 0; % no initial speed
+
+if F0~=0 % case of forced harmonic vibrations
+    y0 = F0/K; %initial displacement
+    % Cf. book of Daniel J. Inmnan: Engineering Vibrations, for the next few lines
+    X = F0./sqrt((w0.^2-w.^2).^2+(2*eta.*w0*w).^2); 
+    theta =atan((2*eta*w0*w)./(w0.^2-w.^2)); 
+    PHI = atan(wd.*(y0-X.*cos(theta))./(v0+(y0-X.*cos(theta)).*eta.*w0-w*X*sin(theta)));
+    A = (y0-X.*cos(theta))./sin(PHI);
+else % case of free vibrations
+    y0 = 1;
+    PHI = atan(wd.*y0./(v0+y0.*eta.*w0));
+    A = 1/wd.*sqrt((v0+y0.*eta.*w0).^2+y0^2*wd^2);
+    X =0;
+    theta = 0;
+end
+
+% exact solution
+y1 = A.*exp(-eta.*w0*t).*sin(wd.*t+PHI)+X.*cos(w*t-theta);
+
+%% Central differences
+% I am using the book of S. Rao (mechanical vibrations) for this function.
+[y2] = CentDiff(F,M,K,C,dt,y0,v0);
+
+
+figure
+plot(t,y1./max(y1(:)),'k',t,y2./max(y1),'rREPLACE_WITH_DASH_DASH')
+legend('Exact solution','Central differences','location','NorthWest')
+ylim([-1,1])
+xlabel('time (s)')
+ylabel('normalized displacement');
+set(gcf,'color','w')
+%% ODE 45
+% Matlab built-in function is used here (It is based on state space
+% representation, like the Runge-Kutta method).
+dXdT = @(t,x,A,F) A*x + F;
+[T,y3] = ode45(@(t,x) dXdT(t,x,[0,1;-M\K,-M\C],[0;M\(F0.*cos(w0.*t))]),[t(1),t(end)],[y0;v0]);
+
+figure
+plot(t,y1./max(y1(:)),'k',T,y3(:,1)./max(y1),'cREPLACE_WITH_DASH_DASH')
+legend('Exact solution','ode 45','location','NorthWest')
+ylim([-1,1])
+xlabel('time (s)')
+ylabel('normalized displacement');
+set(gcf,'color','w')
+%% Newmark method
+% alpha = 1/4 by default
+% beta = 1/2 by default
+[y4,~,~] = Newmark(F,M,K,C,dt,y0,v0);
+
+figure
+plot(t,y1./max(y1(:)),'k',t,y4./max(y1),'bREPLACE_WITH_DASH_DASH')
+legend('Exact solution','Newmark','location','NorthWest')
+ylim([-1,1])
+xlabel('time (s)')
+ylabel('normalized displacement');
+set(gcf,'color','w')
+
+%% 4th order Runge-Kutta
+Fun = @(t,Y,A,F) A*Y+ F; % -> cf state space model for 2nd  Newtown law
+% function for RG 4:  [Y' = AY + F] 
+
+y5 = zeros(size(t));
+clear inputFun
+Y = [y0,v0]';
+for ii=1:numel(t),
+    inputFun.A = [0, 1;-M\K,-M\C];
+    inputFun.F =[0;M\F(ii)];
+    inputFun.Y= Y;
+    [Y] = RK4(Fun,t,dt,inputFun);
+    y5(ii) = Y(1);
+end
+
+figure
+plot(t,y1./max(y1(:)),'k',t,y5./max(y1),'gREPLACE_WITH_DASH_DASH')
+legend('Exact solution','RK4','location','NorthWest')
+ylim([-1,1])
+xlabel('time (s)')
+ylabel('normalized displacement');
+set(gcf,'color','w')
+
+
+
+##### SOURCE END #####
+--></body></html>
